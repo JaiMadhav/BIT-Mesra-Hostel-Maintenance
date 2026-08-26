@@ -3,438 +3,1630 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IILM Hostel Support Portal</title>
+    <title>BIT Mesra Hostel Maintenance Portal</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/feather-icons"></script>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { brand: { dark: '#1e3a8a', light: '#3b82f6' } } } } }
-    </script>
-    <style>
-        body { background-color: #f3f4f6; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-    </style>
-</head>
-<body class="text-gray-800 font-sans antialiased min-h-screen flex flex-col">
-
-    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            <div class="flex h-20 items-center justify-between">
-                <div class="flex-1"></div>
-                <div class="flex-shrink-0 flex justify-center">
-                    <img src="{{ url_for('static', filename='University_logostandard-BLUE-copy.png') }}" alt="IILM Logo" class="h-14">
-                </div>
-                <div class="flex-1 flex justify-end items-center space-x-4">
-                    <span id="userBadge" class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium border border-blue-200"></span>
-                    <button id="logoutBtn" onclick="logout()" class="hidden flex items-center text-gray-500 hover:text-red-600 transition font-medium">
-                        <i data-feather="log-out" class="w-5 h-5 mr-1"></i> Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <main class="flex-grow flex items-center justify-center p-6">
-        
-        <div id="authSection" class="w-full max-w-md">
-            <div class="glass-card shadow-xl rounded-2xl p-8 border border-gray-100">
-                <div class="text-center mb-8">
-                    <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
-                        <i data-feather="lock" class="text-brand-dark w-8 h-8"></i>
-                    </div>
-                    <h2 id="authTitle" class="text-2xl font-bold text-gray-900">Sign In</h2>
-                    <p id="authSubtitle" class="text-sm text-gray-500 mt-1">Enter your credentials to access the portal</p>
-                </div>
-
-                <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
-                    <div id="signupFields" class="hidden space-y-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                            <input type="text" id="regName" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Roll Number</label>
-                            <input type="text" id="regRoll" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" id="authEmail" required placeholder="name@iilm.edu" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <input type="password" id="authPassword" required placeholder="••••••••" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition">
-                    </div>
-                    <button type="submit" id="authSubmitBtn" class="w-full py-3 px-4 rounded-xl shadow-sm text-sm font-bold text-white bg-brand-dark hover:bg-blue-800 transition transform hover:-translate-y-0.5">
-                        Login
-                    </button>
-                </form>
-
-                <div class="mt-6 text-center text-sm text-gray-600">
-                    <span id="authToggleText">Don't have an account?</span> 
-                    <button onclick="toggleAuthMode()" class="text-brand-light hover:underline font-bold" id="authToggleBtn">Sign Up here</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="studentDashboard" class="hidden w-full max-w-4xl flex-col gap-6">
-            <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 w-full mb-6">
-                <div class="bg-white px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
-                        <i data-feather="list" class="text-brand-dark mr-2"></i> My Past Complaints
-                    </h2>
-                    <button onclick="fetchComplaints()" class="text-sm text-gray-500 hover:text-brand-dark">Refresh</button>
-                </div>
-                <div class="overflow-x-auto max-h-60 overflow-y-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <tbody id="studentComplaintsTableBody" class="bg-white divide-y divide-gray-200 text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
-                <div class="bg-brand-dark px-6 py-4">
-                    <h2 class="text-xl font-bold text-white flex items-center">
-                        <i data-feather="edit-3" class="mr-2"></i> Register a New Complaint
-                    </h2>
-                </div>
-                <form id="complaintForm" class="p-8 space-y-6" onsubmit="submitComplaint(event)">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-gray-100">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Hostel Name / Block</label>
-                            <input type="text" id="hostelName" required class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
-                            <input type="text" id="roomNumber" required class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Issue Category / Title</label>
-                        <input type="text" id="issueTitle" required class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Detailed Description</label>
-                        <textarea id="issueDesc" rows="4" required class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light"></textarea>
-                    </div>
-                    <div class="flex justify-end pt-2">
-                        <button type="submit" class="px-6 py-3 rounded-lg text-white bg-brand-dark hover:bg-blue-800 transition flex items-center">
-                            <i data-feather="send" class="w-5 h-5 mr-2"></i> Submit Ticket
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="staffDashboard" class="hidden w-full max-w-7xl flex-col">
-            
-            <div id="adminTabs" class="hidden mb-6 flex space-x-4">
-                <button onclick="switchAdminTab('complaints')" id="tabComplaints" class="px-5 py-2.5 bg-brand-dark text-white rounded-xl shadow font-medium flex items-center transition">
-                    <i data-feather="inbox" class="w-4 h-4 mr-2"></i> Manage Complaints
-                </button>
-                <button onclick="switchAdminTab('students')" id="tabStudents" class="px-5 py-2.5 bg-white text-gray-700 rounded-xl shadow border border-gray-200 hover:bg-gray-50 font-medium flex items-center transition">
-                    <i data-feather="users" class="w-4 h-4 mr-2"></i> Student Directory
-                </button>
-            </div>
-
-            <div id="viewComplaints" class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 block">
-                <div class="bg-white px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
-                        <i data-feather="shield" class="text-brand-dark mr-2"></i> Support Panel
-                    </h2>
-                    <button onclick="fetchComplaints()" class="text-sm bg-gray-50 px-3 py-1.5 rounded-lg border">Refresh List</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Student</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Location</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Issue</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-                                <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="complaintsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="viewStudents" class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 hidden">
-                <div class="bg-white px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
-                        <i data-feather="users" class="text-brand-dark mr-2"></i> Registered Students
-                    </h2>
-                    <span class="text-sm font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full border border-blue-200">
-                        Total Enrolled: <span id="studentCount">0</span>
-                    </span>
-                </div>
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50 sticky top-0">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Student ID</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Full Name</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Roll Number</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">College Email Address</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentsTableBody" class="bg-white divide-y divide-gray-200 text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-
-    </main>
 
     <script>
-        feather.replace();
-
-        let isLoginMode = true;
-        let currentUser = null;
-
-        window.onload = async () => {
-            const res = await fetch('/api/me');
-            if(res.ok) {
-                currentUser = await res.json();
-                loadDashboard();
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#1e3a8a',
+                            light: '#3b82f6'
+                        }
+                    }
+                }
             }
         };
+    </script>
 
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('signupFields').classList.toggle('hidden');
-            document.getElementById('regName').required = !isLoginMode;
-            document.getElementById('regRoll').required = !isLoginMode;
-            
-            document.getElementById('authTitle').innerText = isLoginMode ? 'Sign In' : 'Create Account';
-            document.getElementById('authSubtitle').innerText = isLoginMode ? 'Enter your credentials to access the portal' : 'Register as a student';
-            document.getElementById('authSubmitBtn').innerText = isLoginMode ? 'Login' : 'Sign Up';
-            document.getElementById('authToggleText').innerText = isLoginMode ? "Don't have an account?" : "Already have an account?";
-            document.getElementById('authToggleBtn').innerText = isLoginMode ? 'Sign Up here' : 'Login here';
+    <style>
+        body {
+            background-color: #f3f4f6;
         }
 
-        async function handleAuth(e) {
-            e.preventDefault();
-            const endpoint = isLoginMode ? '/api/login' : '/api/signup';
-            
-            const payload = {
-                email: document.getElementById('authEmail').value,
-                password: document.getElementById('authPassword').value
-            };
+        .glass-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
 
-            if(!isLoginMode) {
-                payload.full_name = document.getElementById('regName').value;
-                payload.roll_number = document.getElementById('regRoll').value;
-            }
+<body class="text-gray-800 font-sans antialiased min-h-screen flex flex-col">
 
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex h-20 items-center justify-between">
+
+            <div class="flex items-center gap-3">
+                <img
+                    src="{{ url_for('static', filename='bit.jpeg') }}"
+                    alt="BIT Mesra"
+                    class="h-12 w-12 object-contain rounded"
+                >
+
+                <div class="leading-tight">
+                    <div class="text-xl font-extrabold tracking-tight text-blue-900">
+                        BIT Mesra
+                    </div>
+                    <div class="text-xs font-medium text-gray-500">
+                        Hostel Maintenance Portal
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <span
+                    id="userBadge"
+                    class="hidden px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium border border-blue-200">
+                </span>
+
+                <button
+                    id="logoutBtn"
+                    onclick="logout()"
+                    class="hidden flex items-center text-gray-500 hover:text-red-600 transition font-medium">
+                    <i data-feather="log-out" class="w-5 h-5 mr-1"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<main class="flex-grow p-6">
+
+    <!-- AUTH -->
+    <section id="authSection" class="w-full max-w-md mx-auto mt-12">
+        <div class="glass-card shadow-xl rounded-2xl p-8 border border-gray-100">
+
+            <div class="text-center mb-8">
+                <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                    <i data-feather="lock" class="text-brand-dark w-8 h-8"></i>
+                </div>
+
+                <h2 id="authTitle" class="text-2xl font-bold text-gray-900">
+                    Sign In
+                </h2>
+
+                <p id="authSubtitle" class="text-sm text-gray-500 mt-1">
+                    Enter your credentials to access the portal
+                </p>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+
+                <div id="signupFields" class="hidden space-y-4 mb-4">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="regName"
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Roll Number
+                        </label>
+
+                        <input
+                            type="text"
+                            id="regRoll"
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Hostel
+                        </label>
+
+                        <select
+                            id="regHostel"
+                            required
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition"
+                        >
+                            <option value="">Select hostel</option>
+                            {% for hostel in ["H1","H2","H3","H4","H5","H6","H7","H8","H9","H10","H11","H12","H13","H14"] %}
+                                <option value="{{ hostel }}">{{ hostel }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Institute Email
+                    </label>
+
+                    <input
+                        type="email"
+                        id="authEmail"
+                        required
+                        placeholder="name@bitmesra.ac.in"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="authPassword"
+                        required
+                        placeholder="••••••••"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light transition"
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    id="authSubmitBtn"
+                    class="w-full py-3 px-4 rounded-xl shadow-sm text-sm font-bold text-white bg-brand-dark hover:bg-blue-800 transition">
+                    Login
+                </button>
+
+            </form>
+
+            <div class="mt-4 text-center">
+                <button
+                    type="button"
+                    onclick="openForgotPassword()"
+                    class="text-sm text-brand-light hover:underline font-medium">
+                    Forgot password?
+                </button>
+            </div>
+
+            <div class="mt-6 text-center text-sm text-gray-600">
+                <span id="authToggleText">New to the portal?</span>
+
+                <button
+                    onclick="toggleAuthMode()"
+                    class="text-brand-light hover:underline font-bold"
+                    id="authToggleBtn">
+                    Create account
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- FORGOT PASSWORD -->
+    <section id="forgotPasswordSection" class="hidden fixed inset-0 bg-black/40 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-7">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900">Reset Password</h3>
+                    <p class="text-sm text-gray-500 mt-1">Use the details registered with your account.</p>
+                </div>
+                <button type="button" onclick="closeForgotPassword()" class="text-gray-500 hover:text-gray-900">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+
+            <form id="forgotPasswordForm" onsubmit="submitForgotPassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Institute Email</label>
+                    <input
+                        type="email"
+                        id="forgotEmail"
+                        required
+                        placeholder="name@bitmesra.ac.in"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+                    <select
+                        id="forgotRole"
+                        onchange="updateForgotVerificationLabel()"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light">
+                        <option value="student">Student</option>
+                        <option value="warden">Warden</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label id="forgotVerificationLabel" class="block text-sm font-medium text-gray-700 mb-1">Registered Roll Number</label>
+                    <input
+                        type="text"
+                        id="forgotVerification"
+                        required
+                        placeholder="e.g. BTECH/60115/23"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <input
+                        type="password"
+                        id="forgotNewPassword"
+                        minlength="6"
+                        required
+                        placeholder="At least 6 characters"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeForgotPassword()" class="px-4 py-2 rounded-lg border text-gray-700">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-brand-dark text-white">
+                        Reset Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+
+    <!-- STUDENT DASHBOARD -->
+    <section
+        id="studentDashboard"
+        class="hidden w-full max-w-6xl mx-auto mt-8 space-y-6">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">My Complaints</p>
+                <p id="studentTotal" class="text-3xl font-bold mt-2">0</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">Open</p>
+                <p id="studentOpen" class="text-3xl font-bold text-yellow-600 mt-2">0</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">Resolved</p>
+                <p id="studentResolved" class="text-3xl font-bold text-green-600 mt-2">0</p>
+            </div>
+
+        </div>
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+
+            <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i data-feather="list" class="text-brand-dark mr-2"></i>
+                    My Complaints
+                </h2>
+
+                <button
+                    onclick="fetchComplaints()"
+                    class="text-sm text-gray-500 hover:text-brand-dark">
+                    Refresh
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Issue</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Location</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Priority</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase">View</th>
+                        </tr>
+                    </thead>
+
+                    <tbody
+                        id="studentComplaintsTableBody"
+                        class="bg-white divide-y divide-gray-200 text-sm">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+
+            <div class="bg-brand-dark px-6 py-4">
+                <h2 class="text-xl font-bold text-white flex items-center">
+                    <i data-feather="edit-3" class="mr-2"></i>
+                    Report a Maintenance Issue
+                </h2>
+            </div>
+
+            <form
+                id="complaintForm"
+                class="p-8 space-y-6"
+                onsubmit="submitComplaint(event)">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Hostel
+                        </label>
+
+                        <input
+                            type="text"
+                            id="hostelName"
+                            readonly
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-100 border text-gray-700"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Your hostel is taken from your student profile.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Room Number
+                        </label>
+
+                        <input
+                            type="text"
+                            id="roomNumber"
+                            required
+                            placeholder="e.g. 214"
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light"
+                        >
+                    </div>
+
+                </div>
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Issue Category
+                        </label>
+
+                        <select
+                            id="category"
+                            required
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light">
+
+                            <option value="">Select category</option>
+                            <option>Electrical / Power</option>
+                            <option>Wi-Fi / Internet</option>
+                            <option>Plumbing / Water</option>
+                            <option>Washroom / Hygiene</option>
+                            <option>Furniture / Room</option>
+                            <option>Washing Machine</option>
+                            <option>Geyser</option>
+                            <option>Cleaning</option>
+                            <option>Pest Control</option>
+                            <option>Other</option>
+
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Priority
+                        </label>
+
+                        <select
+                            id="priority"
+                            required
+                            class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light">
+
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+
+                        </select>
+                    </div>
+
+                </div>
+
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Issue Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="issueTitle"
+                        required
+                        placeholder="e.g. Fan not working"
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light mb-4"
+                    >
+
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="issueDesc"
+                        rows="4"
+                        required
+                        placeholder="Describe the problem and where it is occurring..."
+                        class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:ring-brand-light"
+                    ></textarea>
+                </div>
+
+
+                <div class="flex justify-end pt-2">
+
+                    <button
+                        type="submit"
+                        class="px-6 py-3 rounded-lg text-white bg-brand-dark hover:bg-blue-800 transition flex items-center">
+
+                        <i data-feather="send" class="w-5 h-5 mr-2"></i>
+                        Submit Complaint
+
+                    </button>
+
+                </div>
+
+            </form>
+        </div>
+
+    </section>
+
+
+    <!-- STAFF DASHBOARD -->
+    <section
+        id="staffDashboard"
+        class="hidden w-full max-w-7xl mx-auto mt-8">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">Total</p>
+                <p id="statTotal" class="text-3xl font-bold mt-2">0</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">Pending</p>
+                <p id="statPending" class="text-3xl font-bold text-red-600 mt-2">0</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">In Progress</p>
+                <p id="statProgress" class="text-3xl font-bold text-yellow-600 mt-2">0</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">Resolved</p>
+                <p id="statResolved" class="text-3xl font-bold text-green-600 mt-2">0</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border p-5">
+                <p class="text-sm text-gray-500">Urgent</p>
+                <p id="statUrgent" class="text-3xl font-bold text-red-700 mt-2">0</p>
+            </div>
+
+        </div>
+
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+
+            <div class="px-6 py-5 border-b border-gray-200">
+                <div class="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i data-feather="shield" class="text-brand-dark mr-2"></i>
+                            <span id="staffDashboardTitle">Warden Dashboard</span>
+                        </h2>
+                        <p id="staffScope" class="text-sm text-gray-500 mt-1"></p>
+                    </div>
+
+                    <button
+                        onclick="fetchComplaints(); fetchDashboard()"
+                        class="text-sm bg-gray-50 px-3 py-1.5 rounded-lg border">
+                        Refresh
+                    </button>
+
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-5">
+
+                    <input
+                        id="searchFilter"
+                        oninput="renderStaffComplaints()"
+                        placeholder="Search complaints..."
+                        class="border rounded-lg p-2.5"
+                    >
+
+                    <select
+                        id="statusFilter"
+                        onchange="renderStaffComplaints()"
+                        class="border rounded-lg p-2.5">
+                        <option value="">All statuses</option>
+                        <option>Pending</option>
+                        <option>In Progress</option>
+                        <option>Resolved</option>
+                        <option>Rejected</option>
+                    </select>
+
+                    <select
+                        id="priorityFilter"
+                        onchange="renderStaffComplaints()"
+                        class="border rounded-lg p-2.5">
+                        <option value="">All priorities</option>
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Urgent</option>
+                    </select>
+
+                    <select
+                        id="categoryFilter"
+                        onchange="renderStaffComplaints()"
+                        class="border rounded-lg p-2.5">
+                        <option value="">All categories</option>
+                        <option>Electrical / Power</option>
+                        <option>Wi-Fi / Internet</option>
+                        <option>Plumbing / Water</option>
+                        <option>Washroom / Hygiene</option>
+                        <option>Furniture / Room</option>
+                        <option>Washing Machine</option>
+                        <option>Geyser</option>
+                        <option>Cleaning</option>
+                        <option>Pest Control</option>
+                        <option>Other</option>
+                    </select>
+
+                </div>
+            </div>
+
+
+            <div class="overflow-x-auto">
+
+                <table class="min-w-full divide-y divide-gray-200">
+
+                    <thead class="bg-gray-50">
+                        <tr>
+
+                            <th class="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase">
+                                Complaint
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase">
+                                Location
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase">
+                                Category
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase">
+                                Priority
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase">
+                                Status
+                            </th>
+
+                            <th class="px-5 py-4 text-left text-xs font-bold text-gray-500 uppercase">
+                                Assignment
+                            </th>
+
+                            <th class="px-5 py-4 text-right text-xs font-bold text-gray-500 uppercase">
+                                Action
+                            </th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody
+                        id="complaintsTableBody"
+                        class="bg-white divide-y divide-gray-200">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="adminSection"
+            class="hidden bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 mt-6">
+
+            <div class="px-6 py-5 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i data-feather="users" class="text-brand-dark mr-2"></i>
+                    Student Directory
+                </h2>
+
+                <p class="text-sm text-gray-500 mt-1">Each student profile stores the hostel selected during registration.</p>
+
+                <span class="text-sm font-bold bg-blue-100 text-blue-800 px-3 py-1 rounded-full border border-blue-200 inline-block mt-3">
+                    Registered Students:
+                    <span id="studentCount">0</span>
+                </span>
+            </div>
+
+            <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+
+                <table class="min-w-full divide-y divide-gray-200">
+
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Name</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Roll Number</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Institute Email</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Hostel</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody
+                        id="studentsTableBody"
+                        class="bg-white divide-y divide-gray-200 text-sm">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <div
+            id="wardenSection"
+            class="hidden bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 mt-6">
+
+            <div class="px-6 py-5 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i data-feather="shield" class="text-brand-dark mr-2"></i>
+                    Warden Assignments
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Each demo warden account is mapped to one hostel.</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Warden</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Assigned Hostel</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wardensTableBody" class="bg-white divide-y divide-gray-200 text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- Complaint management modal -->
+<div
+    id="complaintModal"
+    class="hidden fixed inset-0 bg-black/40 z-50 items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+
+        <div class="px-6 py-5 border-b flex items-center justify-between">
+            <div>
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-900">
+                    Complaint Details
+                </h3>
+                <p id="modalSubtitle" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+
+            <button onclick="closeModal()" class="text-gray-500 hover:text-gray-900">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-5">
+
+            <div class="bg-gray-50 rounded-xl p-4 border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Student</p>
+                        <p id="modalStudent" class="font-semibold mt-1"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Location</p>
+                        <p id="modalLocation" class="font-semibold mt-1"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Category</p>
+                        <p id="modalCategory" class="font-semibold mt-1"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Priority</p>
+                        <p id="modalPriority" class="font-semibold mt-1"></p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-xs text-gray-500">Issue Description</p>
+                    <p id="modalDescription" class="text-sm text-gray-700 mt-1 whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div>
+                    <label class="text-xs text-gray-500">Status</label>
+                    <select id="modalStatus" class="w-full border rounded-lg p-2.5 mt-1">
+                        <option>Pending</option>
+                        <option>In Progress</option>
+                        <option>Resolved</option>
+                        <option>Rejected</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-500">Assigned Staff</label>
+                    <select id="modalStaff" class="w-full border rounded-lg p-2.5 mt-1">
+                        <option value="">Not assigned</option>
+                        <option>Electrical Maintenance</option>
+                        <option>Plumbing Maintenance</option>
+                        <option>Network Support</option>
+                        <option>Housekeeping</option>
+                        <option>General Maintenance</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div>
+                <label class="text-xs text-gray-500">Resolution Note</label>
+                <textarea
+                    id="modalResolution"
+                    rows="4"
+                    placeholder="Add a short note about the work done..."
+                    class="w-full border rounded-lg p-2.5 mt-1">
+                </textarea>
+            </div>
+
+            <div>
+                <h4 class="font-semibold text-gray-900 mb-2">Complaint History</h4>
+                <div id="modalHistory" class="space-y-3"></div>
+            </div>
+
+        </div>
+
+        <div class="px-6 py-4 border-t flex justify-end gap-3">
+            <button
+                onclick="closeModal()"
+                class="px-4 py-2 rounded-lg border text-gray-700">
+                Cancel
+            </button>
+
+            <button
+                onclick="saveComplaintChanges()"
+                class="px-4 py-2 rounded-lg bg-brand-dark text-white">
+                Save Changes
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+    feather.replace();
+
+    let isLoginMode = true;
+    let currentUser = null;
+    let allComplaints = [];
+    let currentComplaintId = null;
+
+
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+
+    window.onload = async () => {
+        const res = await fetch("/api/me");
+
+        if (res.ok) {
+            currentUser = await res.json();
+            loadDashboard();
+        }
+    };
+
+
+    function toggleAuthMode() {
+        isLoginMode = !isLoginMode;
+
+        document.getElementById("signupFields").classList.toggle("hidden");
+        document.getElementById("regName").required = !isLoginMode;
+        document.getElementById("regRoll").required = !isLoginMode;
+        document.getElementById("regHostel").required = !isLoginMode;
+
+        document.getElementById("authTitle").innerText =
+            isLoginMode ? "Sign In" : "Create Account";
+
+        document.getElementById("authSubtitle").innerText =
+            isLoginMode
+                ? "Enter your credentials to access the portal"
+                : "Register as a BIT Mesra student";
+
+        document.getElementById("authSubmitBtn").innerText =
+            isLoginMode ? "Login" : "Sign Up";
+
+        document.getElementById("authToggleText").innerText =
+            isLoginMode ? "New to the portal?" : "Already registered?";
+
+        document.getElementById("authToggleBtn").innerText =
+            isLoginMode ? "Create account" : "Sign in";
+    }
+
+
+    function openForgotPassword() {
+        document.getElementById("forgotPasswordSection").classList.remove("hidden");
+        document.getElementById("forgotPasswordSection").classList.add("flex");
+        updateForgotVerificationLabel();
+        feather.replace();
+    }
+
+
+    function closeForgotPassword() {
+        document.getElementById("forgotPasswordSection").classList.add("hidden");
+        document.getElementById("forgotPasswordSection").classList.remove("flex");
+        document.getElementById("forgotPasswordForm").reset();
+        updateForgotVerificationLabel();
+    }
+
+
+    function updateForgotVerificationLabel() {
+        const role = document.getElementById("forgotRole").value;
+        const label = document.getElementById("forgotVerificationLabel");
+        const input = document.getElementById("forgotVerification");
+
+        if (role === "warden") {
+            label.innerText = "Assigned Hostel";
+            input.placeholder = "e.g. H1";
+        } else {
+            label.innerText = "Registered Roll Number";
+            input.placeholder = "e.g. BTECH/60115/23";
+        }
+    }
+
+
+    async function submitForgotPassword(event) {
+        event.preventDefault();
+
+        const payload = {
+            email: document.getElementById("forgotEmail").value.trim(),
+            verification: document.getElementById("forgotVerification").value.trim(),
+            new_password: document.getElementById("forgotNewPassword").value
+        };
+
+        const response = await fetch("/api/forgot-password", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            Swal.fire("Unable to reset password", data.error || "Please check the details and try again.", "error");
+            return;
+        }
+
+        closeForgotPassword();
+
+        Swal.fire({
+            icon: "success",
+            title: "Password reset",
+            text: data.message,
+            confirmButtonColor: "#1e3a8a"
+        });
+    }
+
+
+    async function handleAuth(event) {
+        event.preventDefault();
+
+        const endpoint = isLoginMode
+            ? "/api/login"
+            : "/api/signup";
+
+        const payload = {
+            email: document.getElementById("authEmail").value.trim(),
+            password: document.getElementById("authPassword").value
+        };
+
+        if (!isLoginMode) {
+            payload.full_name = document.getElementById("regName").value.trim();
+            payload.roll_number = document.getElementById("regRoll").value.trim();
+            payload.assigned_hostel = document.getElementById("regHostel").value;
+        }
+
+        try {
             const res = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify(payload)
             });
 
             const data = await res.json();
 
-            if (res.ok) {
-                if(!isLoginMode) {
-                    Swal.fire('Success', 'Account created! Please log in.', 'success');
-                    toggleAuthMode();
-                    document.getElementById('authForm').reset();
-                } else {
-                    currentUser = data;
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Welcome, ${data.full_name}`, showConfirmButton: false, timer: 2000 });
-                    loadDashboard();
-                }
-            } else {
-                Swal.fire('Error', data.error || 'Authentication failed', 'error');
-            }
-        }
-
-        async function logout() {
-            await fetch('/api/logout', { method: 'POST' });
-            currentUser = null;
-            document.getElementById('authSection').classList.remove('hidden');
-            document.getElementById('studentDashboard').classList.add('hidden');
-            document.getElementById('staffDashboard').classList.add('hidden');
-            document.getElementById('logoutBtn').classList.add('hidden');
-            document.getElementById('userBadge').classList.add('hidden');
-            document.getElementById('authForm').reset();
-        }
-
-        function loadDashboard() {
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            
-            const badge = document.getElementById('userBadge');
-            badge.classList.remove('hidden');
-            badge.innerText = `${currentUser.full_name} (${currentUser.role.toUpperCase()})`;
-
-            if (currentUser.role === 'student') {
-                document.getElementById('studentDashboard').classList.remove('hidden');
-                document.getElementById('staffDashboard').classList.add('hidden');
-            } else {
-                document.getElementById('staffDashboard').classList.remove('hidden');
-                document.getElementById('studentDashboard').classList.add('hidden');
-                
-                // If Admin, show the tab controls and load students data
-                if (currentUser.role === 'admin') {
-                    document.getElementById('adminTabs').classList.remove('hidden');
-                    document.getElementById('adminTabs').classList.add('flex');
-                    fetchStudents();
-                } else {
-                    document.getElementById('adminTabs').classList.add('hidden');
-                }
-            }
-            fetchComplaints();
-        }
-
-        // Tab Switching Logic for Admin
-        function switchAdminTab(tabName) {
-            if (tabName === 'complaints') {
-                document.getElementById('viewComplaints').classList.remove('hidden');
-                document.getElementById('viewStudents').classList.add('hidden');
-                
-                document.getElementById('tabComplaints').className = "px-5 py-2.5 bg-brand-dark text-white rounded-xl shadow font-medium flex items-center transition";
-                document.getElementById('tabStudents').className = "px-5 py-2.5 bg-white text-gray-700 rounded-xl shadow border border-gray-200 hover:bg-gray-50 font-medium flex items-center transition";
-            } else {
-                document.getElementById('viewComplaints').classList.add('hidden');
-                document.getElementById('viewStudents').classList.remove('hidden');
-                
-                document.getElementById('tabStudents').className = "px-5 py-2.5 bg-brand-dark text-white rounded-xl shadow font-medium flex items-center transition";
-                document.getElementById('tabComplaints').className = "px-5 py-2.5 bg-white text-gray-700 rounded-xl shadow border border-gray-200 hover:bg-gray-50 font-medium flex items-center transition";
-            }
-        }
-
-        // Admin: Fetch Students List
-        async function fetchStudents() {
-            const res = await fetch('/api/students');
-            if(res.ok) {
-                const data = await res.json();
-                document.getElementById('studentCount').innerText = data.total;
-                
-                const tbody = document.getElementById('studentsTableBody');
-                tbody.innerHTML = '';
-                
-                if (data.students.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-500">No students registered yet.</td></tr>`;
-                } else {
-                    data.students.forEach(s => {
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 text-gray-500 font-medium">#${s.id}</td>
-                                <td class="px-6 py-4 font-bold text-gray-900">${s.full_name}</td>
-                                <td class="px-6 py-4 text-gray-600">${s.roll_number}</td>
-                                <td class="px-6 py-4 text-blue-600 hover:underline"><a href="mailto:${s.email}">${s.email}</a></td>
-                            </tr>
-                        `;
-                    });
-                }
-            }
-        }
-
-        async function submitComplaint(e) {
-            e.preventDefault();
-            Swal.fire({ title: 'Submitting...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-
-            const payload = {
-                hostel_name: document.getElementById('hostelName').value,
-                room_number: document.getElementById('roomNumber').value,
-                issue_title: document.getElementById('issueTitle').value,
-                issue_description: document.getElementById('issueDesc').value
-            };
-
-            await fetch('/api/complaints', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-
-            document.getElementById('complaintForm').reset();
-            Swal.fire({ icon: 'success', title: 'Submitted!', confirmButtonColor: '#1e3a8a' });
-            fetchComplaints();
-        }
-
-        async function fetchComplaints() {
-            const response = await fetch('/api/complaints');
-            const complaints = await response.json();
-            
-            const tbody = currentUser.role === 'student' ? document.getElementById('studentComplaintsTableBody') : document.getElementById('complaintsTableBody');
-            tbody.innerHTML = '';
-
-            if(complaints.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">No complaints found.</td></tr>`;
+            if (!res.ok) {
+                Swal.fire("Error", data.error || "Request failed.", "error");
                 return;
             }
 
-            complaints.forEach(c => {
-                let statusBadge = '';
-                if(c.status === 'Pending') statusBadge = `<span class="px-2 py-1 rounded text-xs bg-red-100 text-red-800 border border-red-200">Pending</span>`;
-                else if (c.status === 'In Progress') statusBadge = `<span class="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800 border border-yellow-200">In Progress</span>`;
-                else if (c.status === 'Resolved') statusBadge = `<span class="px-2 py-1 rounded text-xs bg-green-100 text-green-800 border border-green-200">Resolved</span>`;
-                else statusBadge = `<span class="px-2 py-1 rounded text-xs bg-gray-200 text-gray-800 border border-gray-300">Rejected</span>`;
-                
-                let dateObj = new Date(c.date_submitted);
-                let dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            if (!isLoginMode) {
+                Swal.fire(
+                    "Account created",
+                    "You can now sign in.",
+                    "success"
+                );
 
-                if(currentUser.role === 'student') {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3 whitespace-nowrap text-gray-500">${dateStr}</td>
-                            <td class="px-6 py-3 font-bold">${c.issue_title}</td>
-                            <td class="px-6 py-3">${statusBadge}</td>
-                        </tr>`;
-                } else if (currentUser.role === 'teacher') {
-                    // TEACHERS CAN NOW PROGRESS OR RESOLVE
-                    let actions = (c.status !== 'Resolved' && c.status !== 'Rejected') ? `
-                        <div class="flex justify-end space-x-1">
-                            <button onclick="updateStatus(${c.id}, 'In Progress')" class="text-yellow-600 hover:text-yellow-900 border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 rounded px-2 py-1 transition text-xs">Progress</button>
-                            <button onclick="updateStatus(${c.id}, 'Resolved')" class="text-green-600 hover:text-green-900 border border-green-200 bg-green-50 hover:bg-green-100 rounded px-2 py-1 transition text-xs">Done</button>
-                        </div>
-                    ` : `<span class="text-gray-400 font-medium text-xs">Closed (${c.status})</span>`;
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-gray-500">${dateStr}</td>
-                            <td class="px-6 py-4"><b>${c.student_name}</b><br><span class="text-xs text-gray-500">${c.roll_number}</span></td>
-                            <td class="px-6 py-4">${c.hostel_name} (Rm: ${c.room_number})</td>
-                            <td class="px-6 py-4"><b>${c.issue_title}</b><br><span class="text-xs">${c.issue_description}</span></td>
-                            <td class="px-6 py-4">${statusBadge}</td>
-                            <td class="px-6 py-4 text-right">${actions}</td>
-                        </tr>`;
-                } else {
-                    // ADMINS CAN DO EVERYTHING
-                    let actions = (c.status !== 'Resolved' && c.status !== 'Rejected') ? `
-                        <div class="flex justify-end space-x-1">
-                            <button onclick="updateStatus(${c.id}, 'In Progress')" class="text-yellow-600 hover:text-yellow-900 border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 rounded px-2 py-1 transition text-xs">Progress</button>
-                            <button onclick="updateStatus(${c.id}, 'Resolved')" class="text-green-600 hover:text-green-900 border border-green-200 bg-green-50 hover:bg-green-100 rounded px-2 py-1 transition text-xs">Done</button>
-                            <button onclick="updateStatus(${c.id}, 'Rejected')" class="text-red-600 hover:text-red-900 border border-red-200 bg-red-50 hover:bg-red-100 rounded px-2 py-1 transition text-xs">Reject</button>
-                        </div>
-                    ` : `<span class="text-gray-400 font-medium text-xs">Closed (${c.status})</span>`;
-
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-gray-500">${dateStr}</td>
-                            <td class="px-6 py-4"><b>${c.student_name}</b><br><span class="text-xs text-gray-500">${c.roll_number}</span></td>
-                            <td class="px-6 py-4">${c.hostel_name} (Rm: ${c.room_number})</td>
-                            <td class="px-6 py-4"><b>${c.issue_title}</b><br><span class="text-xs">${c.issue_description}</span></td>
-                            <td class="px-6 py-4">${statusBadge}</td>
-                            <td class="px-6 py-4 text-right">${actions}</td>
-                        </tr>`;
-                }
-            });
-        }
-
-        async function updateStatus(id, newStatus) {
-            const res = await fetch(`/api/complaints/${id}`, {
-                method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus })
-            });
-            
-            if (!res.ok) {
-                const err = await res.json();
-                Swal.fire('Error', err.error, 'error');
-            } else {
-                fetchComplaints(); 
+                toggleAuthMode();
+                document.getElementById("authForm").reset();
+                return;
             }
+
+            const me = await fetch("/api/me");
+
+            if (me.ok) {
+                currentUser = await me.json();
+            }
+
+            Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: "success",
+                title: `Welcome, ${data.full_name}`,
+                showConfirmButton: false,
+                timer: 1800
+            });
+
+            loadDashboard();
+
+        } catch (error) {
+            Swal.fire("Error", "Unable to connect to the server.", "error");
         }
-    </script>
+    }
+
+
+    async function logout() {
+        await fetch("/api/logout", {
+            method: "POST"
+        });
+
+        currentUser = null;
+        allComplaints = [];
+
+        document.getElementById("authSection").classList.remove("hidden");
+        document.getElementById("studentDashboard").classList.add("hidden");
+        document.getElementById("staffDashboard").classList.add("hidden");
+        document.getElementById("logoutBtn").classList.add("hidden");
+        document.getElementById("userBadge").classList.add("hidden");
+
+        document.getElementById("authForm").reset();
+    }
+
+
+    function setStudentHostelField() {
+        const hostelField = document.getElementById("hostelName");
+        if (hostelField) {
+            hostelField.value = currentUser?.assigned_hostel || "Not assigned";
+        }
+    }
+
+
+    function loadDashboard() {
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("logoutBtn").classList.remove("hidden");
+
+        const badge = document.getElementById("userBadge");
+        badge.classList.remove("hidden");
+        badge.innerText = currentUser.assigned_hostel
+            ? `${currentUser.full_name} · ${currentUser.assigned_hostel} (${currentUser.role.toUpperCase()})`
+            : `${currentUser.full_name} (${currentUser.role.toUpperCase()})`;
+
+        if (currentUser.role === "student") {
+            setStudentHostelField();
+            document.getElementById("studentDashboard").classList.remove("hidden");
+            document.getElementById("staffDashboard").classList.add("hidden");
+        } else {
+            document.getElementById("staffDashboard").classList.remove("hidden");
+            document.getElementById("studentDashboard").classList.add("hidden");
+
+            if (currentUser.role === "admin") {
+                document.getElementById("adminSection").classList.remove("hidden");
+                document.getElementById("wardenSection").classList.remove("hidden");
+                fetchStudents();
+                fetchWardens();
+                document.getElementById("staffDashboardTitle").innerText = "Hostel Operations Dashboard";
+                document.getElementById("staffScope").innerText = "All hostels";
+            } else {
+                document.getElementById("adminSection").classList.add("hidden");
+                document.getElementById("wardenSection").classList.add("hidden");
+                document.getElementById("staffDashboardTitle").innerText = "Warden Dashboard";
+                document.getElementById("staffScope").innerText = currentUser.assigned_hostel
+                    ? `Assigned hostel: ${currentUser.assigned_hostel}`
+                    : "No hostel assigned";
+            }
+
+            fetchDashboard();
+        }
+
+        fetchComplaints();
+    }
+
+
+    async function submitComplaint(event) {
+        event.preventDefault();
+
+        const hostel = currentUser?.assigned_hostel || "";
+        if (!hostel) {
+            Swal.fire("Hostel not assigned", "Your student profile does not have a hostel assigned yet. Please update the student record before submitting a complaint.", "warning");
+            return;
+        }
+
+        const payload = {
+            room_number: document.getElementById("roomNumber").value.trim(),
+            category: document.getElementById("category").value,
+            priority: document.getElementById("priority").value,
+            issue_title: document.getElementById("issueTitle").value.trim(),
+            issue_description: document.getElementById("issueDesc").value.trim()
+        };
+
+        const button = event.submitter;
+        button.disabled = true;
+
+        try {
+            const res = await fetch("/api/complaints", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                Swal.fire("Error", data.error || "Unable to submit complaint.", "error");
+                return;
+            }
+
+            document.getElementById("complaintForm").reset();
+            setStudentHostelField();
+
+            Swal.fire({
+                icon: "success",
+                title: "Complaint submitted",
+                text: `Complaint #${data.complaint_id} has been recorded.`,
+                confirmButtonColor: "#1e3a8a"
+            });
+
+            fetchComplaints();
+
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+
+    async function fetchComplaints() {
+        const response = await fetch("/api/complaints");
+
+        if (!response.ok) {
+            return;
+        }
+
+        allComplaints = await response.json();
+
+        if (currentUser.role === "student") {
+            renderStudentComplaints();
+        } else {
+            renderStaffComplaints();
+        }
+    }
+
+
+    function formatDate(value) {
+        const date = new Date(value);
+
+        return date.toLocaleDateString() + " " +
+            date.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+    }
+
+
+    function statusBadge(status) {
+        const styles = {
+            "Pending": "bg-red-100 text-red-800 border-red-200",
+            "In Progress": "bg-yellow-100 text-yellow-800 border-yellow-200",
+            "Resolved": "bg-green-100 text-green-800 border-green-200",
+            "Rejected": "bg-gray-200 text-gray-800 border-gray-300"
+        };
+
+        return `
+            <span class="px-2 py-1 rounded text-xs border ${styles[status] || styles["Pending"]}">
+                ${status}
+            </span>
+        `;
+    }
+
+
+    function priorityBadge(priority) {
+        const styles = {
+            "Low": "bg-gray-100 text-gray-700 border-gray-200",
+            "Medium": "bg-blue-100 text-blue-800 border-blue-200",
+            "High": "bg-orange-100 text-orange-800 border-orange-200",
+            "Urgent": "bg-red-100 text-red-800 border-red-200"
+        };
+
+        return `
+            <span class="px-2 py-1 rounded text-xs border ${styles[priority] || styles["Medium"]}">
+                ${priority}
+            </span>
+        `;
+    }
+
+
+    function renderStudentComplaints() {
+        const tbody = document.getElementById("studentComplaintsTableBody");
+        tbody.innerHTML = "";
+
+        const total = allComplaints.length;
+        const open = allComplaints.filter(
+            c => c.status === "Pending" || c.status === "In Progress"
+        ).length;
+        const resolved = allComplaints.filter(
+            c => c.status === "Resolved"
+        ).length;
+
+        document.getElementById("studentTotal").innerText = total;
+        document.getElementById("studentOpen").innerText = open;
+        document.getElementById("studentResolved").innerText = resolved;
+
+        if (!allComplaints.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-gray-500">
+                        No complaints submitted yet.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        allComplaints.forEach(c => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-gray-500">
+                        ${formatDate(c.date_submitted)}
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <div class="font-semibold">${escapeHTML(c.issue_title)}</div>
+                        <div class="text-xs text-gray-500 mt-1">${escapeHTML(c.category)}</div>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        ${escapeHTML(c.hostel_name)} · Room ${escapeHTML(c.room_number)}
+                    </td>
+
+                    <td class="px-6 py-4">
+                        ${priorityBadge(c.priority)}
+                    </td>
+
+                    <td class="px-6 py-4">
+                        ${statusBadge(c.status)}
+                    </td>
+
+                    <td class="px-6 py-4 text-right">
+                        <button
+                            onclick="openHistory(${c.id})"
+                            class="text-brand-dark text-sm font-medium hover:underline">
+                            Details
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+
+    function renderStaffComplaints() {
+        const tbody = document.getElementById("complaintsTableBody");
+
+        const search = document.getElementById("searchFilter").value.toLowerCase();
+        const status = document.getElementById("statusFilter").value;
+        const priority = document.getElementById("priorityFilter").value;
+        const category = document.getElementById("categoryFilter").value;
+
+        const filtered = allComplaints.filter(c => {
+            const matchesSearch =
+                !search ||
+                String(c.issue_title || "").toLowerCase().includes(search) ||
+                String(c.issue_description || "").toLowerCase().includes(search) ||
+                String(c.student_name || "").toLowerCase().includes(search) ||
+                String(c.hostel_name || "").toLowerCase().includes(search) ||
+                String(c.room_number || "").toLowerCase().includes(search);
+
+            const matchesStatus = !status || c.status === status;
+            const matchesPriority = !priority || c.priority === priority;
+            const matchesCategory = !category || c.category === category;
+
+            return (
+                matchesSearch &&
+                matchesStatus &&
+                matchesPriority &&
+                matchesCategory
+            );
+        });
+
+        tbody.innerHTML = "";
+
+        if (!filtered.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-8 text-gray-500">
+                        No complaints match the selected filters.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        filtered.forEach(c => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50">
+
+                    <td class="px-5 py-4">
+                        <div class="font-semibold text-gray-900">
+                            #${c.id} · ${escapeHTML(c.issue_title)}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            ${escapeHTML(c.student_name)} · ${escapeHTML(c.roll_number)}
+                        </div>
+                    </td>
+
+                    <td class="px-5 py-4">
+                        ${escapeHTML(c.hostel_name)}
+                        <div class="text-xs text-gray-500">
+                            Room ${escapeHTML(c.room_number)}
+                        </div>
+                    </td>
+
+                    <td class="px-5 py-4">
+                        ${escapeHTML(c.category)}
+                    </td>
+
+                    <td class="px-5 py-4">
+                        ${priorityBadge(c.priority)}
+                    </td>
+
+                    <td class="px-5 py-4">
+                        ${statusBadge(c.status)}
+                    </td>
+
+                    <td class="px-5 py-4">
+                        <div class="text-sm">
+                            ${escapeHTML(c.assigned_staff || "Not assigned")}
+                        </div>
+                    </td>
+
+                    <td class="px-5 py-4 text-right">
+                        <button
+                            onclick="openComplaint(${c.id})"
+                            class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-100 hover:bg-blue-100 text-sm">
+                            Manage
+                        </button>
+                    </td>
+
+                </tr>
+            `;
+        });
+    }
+
+
+    async function fetchDashboard() {
+        const response = await fetch("/api/dashboard");
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+
+        document.getElementById("statTotal").innerText = data.total;
+        document.getElementById("statPending").innerText = data.pending;
+        document.getElementById("statProgress").innerText = data.in_progress;
+        document.getElementById("statResolved").innerText = data.resolved;
+        document.getElementById("statUrgent").innerText = data.urgent;
+    }
+
+
+    async function fetchStudents() {
+        const response = await fetch("/api/students");
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+
+        document.getElementById("studentCount").innerText = data.total;
+
+        const tbody = document.getElementById("studentsTableBody");
+        tbody.innerHTML = "";
+
+        if (!data.students.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-8 text-gray-500">
+                        No students registered yet.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.students.forEach(student => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50">
+
+                    <td class="px-6 py-4 font-semibold">
+                        ${escapeHTML(student.full_name)}
+                    </td>
+
+                    <td class="px-6 py-4 text-gray-600">
+                        ${escapeHTML(student.roll_number || "-")}
+                    </td>
+
+                    <td class="px-6 py-4 text-blue-600">
+                        ${escapeHTML(student.email)}
+                    </td>
+
+                    <td class="px-6 py-4 font-medium">
+                        ${escapeHTML(student.assigned_hostel || "Not assigned")}
+                    </td>
+
+                </tr>
+            `;
+        });
+    }
+
+
+    async function fetchWardens() {
+        const response = await fetch("/api/wardens");
+
+        if (!response.ok) {
+            return;
+        }
+
+        const wardens = await response.json();
+        const tbody = document.getElementById("wardensTableBody");
+        tbody.innerHTML = "";
+
+        wardens.forEach(warden => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 font-semibold">${escapeHTML(warden.full_name)}</td>
+                    <td class="px-6 py-4 text-blue-600">${escapeHTML(warden.email)}</td>
+                    <td class="px-6 py-4 font-medium">${escapeHTML(warden.assigned_hostel || "Not assigned")}</td>
+                </tr>
+            `;
+        });
+    }
+
+
+    async function openComplaint(id) {
+        currentComplaintId = id;
+
+        const complaint = allComplaints.find(c => c.id === id);
+
+        if (!complaint) {
+            return;
+        }
+
+        document.getElementById("modalTitle").innerText =
+            `Complaint #${complaint.id}`;
+
+        document.getElementById("modalSubtitle").innerText =
+            `${complaint.issue_title}`;
+        document.getElementById("modalStudent").innerText = `${complaint.student_name} · ${complaint.roll_number}`;
+        document.getElementById("modalLocation").innerText = `${complaint.hostel_name} · Room ${complaint.room_number}`;
+        document.getElementById("modalCategory").innerText = complaint.category;
+        document.getElementById("modalPriority").innerText = complaint.priority;
+        document.getElementById("modalDescription").innerText = complaint.issue_description;
+
+        document.getElementById("modalStatus").value = complaint.status;
+        document.getElementById("modalStaff").value = complaint.assigned_staff || "";
+        document.getElementById("modalResolution").value =
+            complaint.resolution_note || "";
+
+        document.getElementById("complaintModal")
+            .classList.remove("hidden");
+
+        document.getElementById("complaintModal")
+            .classList.add("flex");
+
+        await loadHistory(id);
+        feather.replace();
+    }
+
+
+    async function openHistory(id) {
+        currentComplaintId = id;
+
+        const complaint = allComplaints.find(c => c.id === id);
+
+        if (!complaint) {
+            return;
+        }
+
+        document.getElementById("modalTitle").innerText =
+            `Complaint #${complaint.id}`;
+
+        document.getElementById("modalSubtitle").innerText =
+            `${complaint.issue_title}`;
+        document.getElementById("modalStudent").innerText = `${complaint.student_name} · ${complaint.roll_number}`;
+        document.getElementById("modalLocation").innerText = `${complaint.hostel_name} · Room ${complaint.room_number}`;
+        document.getElementById("modalCategory").innerText = complaint.category;
+        document.getElementById("modalPriority").innerText = complaint.priority;
+        document.getElementById("modalDescription").innerText = complaint.issue_description;
+
+        document.getElementById("modalStatus").value = complaint.status;
+        document.getElementById("modalStaff").value = complaint.assigned_staff || "";
+        document.getElementById("modalResolution").value =
+            complaint.resolution_note || "";
+
+        document.getElementById("complaintModal")
+            .classList.remove("hidden");
+
+        document.getElementById("complaintModal")
+            .classList.add("flex");
+
+        const buttons = document.querySelector("#complaintModal button[onclick='saveComplaintChanges()']");
+
+        if (currentUser.role === "student") {
+            buttons.classList.add("hidden");
+            document.getElementById("modalStatus").disabled = true;
+            document.getElementById("modalStaff").disabled = true;
+            document.getElementById("modalResolution").disabled = true;
+        } else {
+            buttons.classList.remove("hidden");
+            document.getElementById("modalStatus").disabled = false;
+            document.getElementById("modalStaff").disabled = false;
+            document.getElementById("modalResolution").disabled = false;
+        }
+
+        await loadHistory(id);
+        feather.replace();
+    }
+
+
+    async function loadHistory(id) {
+        const response = await fetch(`/api/complaints/${id}/history`);
+        const container = document.getElementById("modalHistory");
+
+        if (!response.ok) {
+            container.innerHTML = `
+                <p class="text-sm text-gray-500">
+                    Unable to load history.
+                </p>
+            `;
+            return;
+        }
+
+        const history = await response.json();
+
+        if (!history.length) {
+            container.innerHTML = `
+                <p class="text-sm text-gray-500">
+                    No history available.
+                </p>
+            `;
+            return;
+        }
+
+        container.innerHTML = history.map(item => `
+            <div class="border-l-2 border-blue-200 pl-3">
+
+                <div class="flex items-center justify-between gap-3">
+                    <span class="font-medium text-gray-800">
+                        ${item.status}
+                    </span>
+
+                    <span class="text-xs text-gray-400">
+                        ${formatDate(item.changed_at)}
+                    </span>
+                </div>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    ${escapeHTML(item.note || "Status updated")}
+                    · ${escapeHTML(item.changed_by)}
+                </p>
+
+            </div>
+        `).join("");
+    }
+
+
+    async function saveComplaintChanges() {
+        if (!currentComplaintId) {
+            return;
+        }
+
+        const payload = {
+            status: document.getElementById("modalStatus").value,
+            assigned_staff: document.getElementById("modalStaff").value,
+            resolution_note: document.getElementById("modalResolution").value.trim()
+        };
+
+        const response = await fetch(
+            `/api/complaints/${currentComplaintId}`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            Swal.fire("Error", data.error || "Unable to update complaint.", "error");
+            return;
+        }
+
+        closeModal();
+
+        Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Complaint updated",
+            showConfirmButton: false,
+            timer: 1600
+        });
+
+        await fetchComplaints();
+        await fetchDashboard();
+    }
+
+
+    function closeModal() {
+        document.getElementById("complaintModal")
+            .classList.add("hidden");
+
+        document.getElementById("complaintModal")
+            .classList.remove("flex");
+
+        currentComplaintId = null;
+    }
+</script>
+
 </body>
 </html>
